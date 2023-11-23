@@ -1,7 +1,7 @@
 import socket
 import threading
 import os
-import json
+
 HOST = ''
 PORT = 0
 
@@ -51,12 +51,12 @@ def join(inp):
     except:
         print("Error: Connection to the Message Board Server has failed! Please check IP Address and Port Number.")
         return None
-    return json.dumps({"command":"join"})
+    return b"join"
 
 @check_args(1)
 @connection_req
 def leave(inp):
-    return json.dumps({"command":"leave"})
+    return b"leave"
 
 @check_args(2)
 @connection_req
@@ -64,15 +64,22 @@ def register(inp):
     newHandle = inp[1]
     global userhandle
     userhandle = newHandle
-    return json.dumps({"command":"register", "handle": newHandle})
+    return f"register {newHandle}".encode()
 
-@check_args(3)
+@check_args(2)
 @connection_req
 @register_req
 def store(inp):
-    handle, message = inp[1], inp[2]
-    pass
+    filename = inp[1]
+    try:
+        with open(filename, 'rb') as file:
+            file_content = file.read()
 
+        send_to_server = f"store {filename}\n".encode() + file_content
+        client_socket.sendall(send_to_server)
+
+    except FileNotFoundError:
+        print(f'Error: File {filename} not found.')
 
 
 def instructions():
@@ -107,24 +114,17 @@ def instructions():
 def receive_messages():
     while True:
         try:
-
             data = client_socket.recv(1024)
 
-            data = data.decode()
-            data = json.loads(data)
+            if not data:
+                print("Server closed the connection.")
+                client_socket.close()
+                break
 
-            if data.get('success') != None:
-                global userhandle
-                if data.get('success'):
-                    userhandle = data.get('handle')
-                else:
-                    userhandle = None
-            
-            print(data.get('message'))
+            print(data.decode())
 
-
-        except:
-
+        except Exception as e:
+            print(f"Error: {e}")
             client_socket.close()
             break
 
@@ -142,40 +142,26 @@ while True:
         print('Error: Command not found.')
         continue
 
-    
-    send_to_server = ''
-
     if command == '/join':
         send_to_server = join(newinp)
-        
     elif command == '/leave':
         send_to_server = leave(newinp)
-        
     elif command == '/register':
         send_to_server = register(newinp)
-        
-
     elif command == '/store':
-        newList = [newinp[0]]
-        #add file to send to server
-
+        store(newinp)
     elif command == '/dir':
         pass
-
     elif command == '/get':
         pass
-
     elif command == '/?':
         instructions()
-        
     else:
         print('Error: Command not found.')
 
-    if send_to_server == None:
+    if send_to_server is None:
         continue
-    client_socket.sendall(send_to_server.encode())
-
-
+    client_socket.sendall(send_to_server)
 
 
 

@@ -1,7 +1,6 @@
 import socket
 import threading
 import os
-import json
 
 HOST = '127.0.0.1'
 PORT = 12345
@@ -9,12 +8,15 @@ PORT = 12345
 clients = []
 clientNames = {}
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+file_save_folder = os.path.join(script_dir, "Server")
+os.makedirs(file_save_folder, exist_ok=True)
+
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((HOST, PORT))
 server_socket.listen()
 
 def handle_client(conn, addr):
-
     connPort = addr[1]
 
     while True:
@@ -22,16 +24,19 @@ def handle_client(conn, addr):
             send_back = {}
 
             data = conn.recv(1024)
-            
-            message = data.decode()
-            # assumes everything is in json
-            cmdDict = json.loads(message)
 
-            # print(type(message))
-            command= cmdDict.get('command')
+            if not data:
+                # If data is empty, the client has closed the connection
+                clients.remove(conn)
+                del(clientNames[connPort])
+                conn.close()
+                break
+
+            # Check the type of command based on the first word
+            command, *args = data.split()
 
             # ! -- join  --------------------
-            if command == 'join':
+            if command == b'join':
                 clients.append(conn)
                 send_back['message'] = 'Connection to the File Exchange Server is successful!'
 
@@ -42,20 +47,18 @@ def handle_client(conn, addr):
                     send_back['success'] = True
                     send_back['handle'] = handle
             # ! -- leave -------------------
-            if command == 'leave':
+            elif command == b'leave':
                 clients.remove(conn)
                 # remove name
                 del(clientNames[connPort])
                 send_back['message'] = 'Connection closed. Thank you!'
-
             # ! -- register ----------------
-            if command == 'register':
-                newHandle = cmdDict.get('handle')
-                
+            elif command == b'register':
+                newHandle = args[0].decode()
+
                 if clientNames.get(connPort) != None:
                     send_back['message'] = f'already registered'
-                    send_back = json.dumps(send_back)
-                    conn.sendall(send_back.encode())
+                    conn.sendall(send_back['message'].encode())
                     continue
 
                 send_back['message'] = f'Welcome {newHandle}!'
@@ -66,22 +69,25 @@ def handle_client(conn, addr):
                 else:
                     clientNames[connPort] = newHandle
 
-                
-
-
             # ! ---- store
-            if command == 'store':
-                pass
+            elif command == b'store':
+                filename = args[0].decode()
+                file_path = os.path.join(file_save_folder, filename)
+
+                with open(file_path, 'wb') as file:
+                    file.write(b' '.join(args[1:]))
+
+                send_back['message'] = f'File {filename} stored successfully.'
 
             # ! -- directory      
-            if command == 'dir':
+            elif command == b'dir':
                 pass
-                
+            else:
+                # Handle other types of messages if needed
+                print(f"Received unknown command: {command}")
 
-            # send back
-            send_back = json.dumps(send_back)
-            conn.sendall(send_back.encode())
-
+            # Send back responses
+            conn.sendall(send_back['message'].encode())
 
         except socket.error as e:
             print(f"client has left/terminal window has been closed")
@@ -90,17 +96,7 @@ def handle_client(conn, addr):
             conn.close()
             break
 
-        except json.JSONDecodeError as e:
-            print(f"JSON decoding error: {e}")
-            break
-
-        except Exception as e:
-            print(e)
-            break
-
 while True:
-
     conn, addr = server_socket.accept()
-
     client_thread = threading.Thread(target=handle_client, args=(conn, addr))
     client_thread.start()
