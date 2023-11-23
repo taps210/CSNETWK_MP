@@ -1,29 +1,35 @@
 import socket
 import threading
+import os
 import json
 HOST = ''
 PORT = 0
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 userhandle = None
+
 # ! ----------------WRAPPERS----------------------------
+
+#Checks if correct ip and port combination
 def connection_req(func):
     def wrapper(*args, **kwargs):
         if client_socket.getsockname() == ('0.0.0.0', 0):
-            print('Error: Please connect to the server first.')
+            print('Error: Connection to the Server has failed! Please check IP Address and Port Number.')
             return
         return func(*args, **kwargs)
     return wrapper
 
+#Checks if correct users
 def register_req(func):
     def wrapper(*args, **kwargs):
         # Check the condition here
         if userhandle == None:
-            print('Error: Please register before sending a message.')
+            print('Error: Unregistered user.')
         else:
             return func(*args, **kwargs)
     return wrapper
 
+#Checks if incorrect parameters
 def check_args(n):
     def length_decorator(func):
         def wrapper(userInput):
@@ -34,6 +40,7 @@ def check_args(n):
         return wrapper
     return length_decorator
 # ! ----------------WRAPPERS----------------------------
+
 @check_args(3)
 def join(inp):
     global HOST, PORT
@@ -62,34 +69,37 @@ def register(inp):
 @check_args(3)
 @connection_req
 @register_req
-def msg(inp):
+def store(inp):
     handle, message = inp[1], inp[2]
-    return json.dumps({"command":"msg", "handle":handle, "message":message} )
+    pass
 
 
-@check_args(2)
-@connection_req
-@register_req
-def msgAll(inp):
-    message = inp[1]
-    return json.dumps({"command":"all", "message": message})
 
-def send_help():
+def instructions():
     print(
 '''
     List of commands
-    ~ to connect to the server app
-        /join <server_ip_add> <port>
-    ~ to disconnect from the server app
-        /leave
-    ~ register a unique handle
-        /register <handle> 
-    ~ send message to all
-        /all <message>
-    ~ send a direct message
-        /msg <handle> <message>
-    ~ get list of commands
-        /?
+
+    /join <server_ip_add> <port>
+    - Connect to the server application
+    
+    /leave
+    - Disconnect to the server application
+    
+    /register <handle> 
+    - Register a unique handle or alias
+
+    /store <filename>
+    - Send file to server
+
+    /dir
+    - Request directory file list from a server
+
+    /get <filename>
+    - Fetch a file from a server
+
+    /?
+    - Request command help to output all input syntax commands for references
 ''')
 
 
@@ -127,43 +137,43 @@ while True:
     newinp = message.split()
 
     command = newinp[0]
+
     if command[0] != '/':
-        print('Error: Invalid command.')
+        print('Error: Command not found.')
         continue
-    send_to_sever = ''
+
+    
+    send_to_server = ''
+
     if command == '/join':
-        send_to_sever = join(newinp)
+        send_to_server = join(newinp)
         
     elif command == '/leave':
-        send_to_sever = leave(newinp)
+        send_to_server = leave(newinp)
         
     elif command == '/register':
-        send_to_sever = register(newinp)
+        send_to_server = register(newinp)
         
-    elif command == '/all':
 
+    elif command == '/store':
         newList = [newinp[0]]
-        temp = ' '.join(newinp[1:])
-        newList.append(temp)
-        send_to_sever = msgAll(newList)
+        #add file to send to server
 
-        
-    elif command == '/msg':
+    elif command == '/dir':
+        pass
 
-        newList = [newinp[0], newinp[1]]
-        temp = ' '.join(newinp[2:])
-        newList.append(temp)
-        send_to_sever = msg(newList)
+    elif command == '/get':
+        pass
 
     elif command == '/?':
-        send_help()
+        instructions()
         
     else:
-        print('Error: No command was found.')
+        print('Error: Command not found.')
 
-    if send_to_sever == None:
+    if send_to_server == None:
         continue
-    client_socket.sendall(send_to_sever.encode())
+    client_socket.sendall(send_to_server.encode())
 
 
 

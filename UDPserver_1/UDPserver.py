@@ -1,5 +1,6 @@
 import socket
 import threading
+import os
 import json
 
 HOST = '127.0.0.1'
@@ -32,7 +33,7 @@ def handle_client(conn, addr):
             # ! -- join  --------------------
             if command == 'join':
                 clients.append(conn)
-                send_back['message'] = 'Connection to the Message Board Server is successful!'
+                send_back['message'] = 'Connection to the File Exchange Server is successful!'
 
                 # means user was registered
                 handle = clientNames.get(connPort)
@@ -68,46 +69,14 @@ def handle_client(conn, addr):
                 
 
 
-            # ! ---- send all
-            if command == 'all':
-                message = cmdDict.get('message')
-                sender = clientNames[connPort]
-                message = f'{sender} : {message}'
+            # ! ---- store
+            if command == 'store':
+                pass
 
-
-                send_back['message'] = message
-
-                message = {'message': message}
-                message = json.dumps(message)
-                for client in clients:
-                    if client != conn:
-                        client.sendall(message.encode())
-
-            # ! -- send to handle        
-            if command == 'msg':
-                message = cmdDict.get('message')
-                handle = cmdDict.get('handle')
-                sender = clientNames.get(connPort)
-
-                send_back['message'] = f'[To {handle}] : {message}'
-                if handle not in clientNames.values():
-                    send_back['message'] = 'Error: Handle or alias not found.'
+            # ! -- directory      
+            if command == 'dir':
+                pass
                 
-                # ? this is to find port number of client
-                handle_port = None
-                for port, handlee in clientNames.items():
-                    # find port number
-                    if handle == handlee:
-                        handle_port = port
-                # ? find the client that matches the port number
-                for client in clients:
-                    if handle_port == client.getpeername()[1]:
-                        #send here?
-                        message = f'[From {sender}] : {message}'
-                        message = json.dumps({'message': message})
-                        client.sendall(message.encode())
-                
-
 
             # send back
             send_back = json.dumps(send_back)
