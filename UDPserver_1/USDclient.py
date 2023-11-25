@@ -1,6 +1,7 @@
 import socket
 import threading
 import os
+import time
 
 HOST = ''
 PORT = 0
@@ -49,14 +50,15 @@ def join(inp):
         client_socket.connect((HOST, PORT))
         receive_thread.start()
     except:
-        print("Error: Connection to the Message Board Server has failed! Please check IP Address and Port Number.")
+        print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
         return None
-    return b"join"
+    
+    client_socket.sendall(b'join')
 
 @check_args(1)
 @connection_req
 def leave(inp):
-    return b"leave"
+    client_socket.sendall(b'leave')
 
 @check_args(2)
 @connection_req
@@ -64,7 +66,8 @@ def register(inp):
     newHandle = inp[1]
     global userhandle
     userhandle = newHandle
-    return f"register {newHandle}".encode()
+    client_socket.sendall(f"register {newHandle}".encode())
+    
 
 @check_args(2)
 @connection_req
@@ -72,15 +75,57 @@ def register(inp):
 def store(inp):
     filename = inp[1]
     try:
-        with open(filename, 'rb') as file:
-            file_content = file.read()
+        client_socket.sendall(f'store {filename}\n'.encode())
 
-        send_to_server = f"store {filename}\n".encode() + file_content
-        client_socket.sendall(send_to_server)
+        time.sleep(0.01)
+
+        with open(filename, 'rb') as f:
+            data = f.read(892000)
+            client_socket.sendto(data, (HOST, PORT)) # send as bytes
+        f.close()
+        print('File sent.')
+        
+        # with open(filename, 'rb') as file:
+        #     file_content = file.read()
+
+        # send_to_server = f"store {filename}\n".encode() + file_content
+        # client_socket.sendall(send_to_server)
 
     except FileNotFoundError:
         print(f'Error: File {filename} not found.')
 
+@connection_req
+@register_req
+def dir():
+        server_directory = f"./Server"
+
+        if not os.path.exists(server_directory):
+            print(f"Directory '{server_directory}' does not exist.")
+
+        try:
+            with os.scandir(server_directory) as entries:
+                print(f"Files and Directories in '{server_directory}':")
+                for entry in entries:
+                    print(entry.name)
+        except Exception as e:
+            print(f"Error accessing the directory: {e}")
+
+@connection_req
+@register_req
+def get():
+    filename = newinp[1]
+    client_socket.sendall(f'get {filename}\n'.encode())
+
+    try:
+        with open(filename, 'wb') as file:
+            while True:
+                data = client_socket.recv(1024).decode()
+                if not data:
+                    break
+                file.write(data.encode())
+        print(f'File {filename} received successfully.')
+    except Exception as e:
+        print(f'Error receiving file: {e}')
 
 def instructions():
     print(
@@ -100,7 +145,7 @@ def instructions():
     - Send file to server
 
     /dir
-    - Request directory file list from a server
+    - Request directory file list from the server
 
     /get <filename>
     - Fetch a file from a server
@@ -109,8 +154,6 @@ def instructions():
     - Request command help to output all input syntax commands for references
 ''')
 
-
-
 def receive_messages():
     while True:
         try:
@@ -118,50 +161,48 @@ def receive_messages():
 
             if not data:
                 print("Server closed the connection.")
-                client_socket.close()
                 break
 
             print(data.decode())
 
         except Exception as e:
             print(f"Error: {e}")
-            client_socket.close()
             break
+    client_socket.close()
 
 receive_thread = threading.Thread(target=receive_messages)
+# receive_thread.start()
 
 while True:
     # Read a message from the user and send it to the server
+    print('yes')
     message = input()
+    print(message)
+    
 
     newinp = message.split()
+    print(newinp)
 
     command = newinp[0]
+    print(command)
 
     if command[0] != '/':
         print('Error: Command not found.')
         continue
 
     if command == '/join':
-        send_to_server = join(newinp)
+        join(newinp)
     elif command == '/leave':
-        send_to_server = leave(newinp)
+        leave(newinp)
     elif command == '/register':
-        send_to_server = register(newinp)
+        register(newinp)
     elif command == '/store':
         store(newinp)
     elif command == '/dir':
-        pass
+        dir()
     elif command == '/get':
-        pass
+        get()
     elif command == '/?':
         instructions()
     else:
         print('Error: Command not found.')
-
-    if send_to_server is None:
-        continue
-    client_socket.sendall(send_to_server)
-
-
-

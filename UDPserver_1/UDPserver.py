@@ -23,7 +23,7 @@ def handle_client(conn, addr):
         try:
             send_back = {}
 
-            data = conn.recv(1024)
+            data = conn.recv(89200)
 
             if not data:
                 # If data is empty, the client has closed the connection
@@ -33,8 +33,9 @@ def handle_client(conn, addr):
                 break
 
             # Check the type of command based on the first word
-            command, *args = data.split()
 
+            command, *args = data.split()
+            print(data)
             # ! -- join  --------------------
             if command == b'join':
                 clients.append(conn)
@@ -72,20 +73,37 @@ def handle_client(conn, addr):
             # ! ---- store
             elif command == b'store':
                 filename = args[0].decode()
+                print("The filename is " + filename)
                 file_path = os.path.join(file_save_folder, filename)
 
-                with open(file_path, 'wb') as file:
-                    file.write(b' '.join(args[1:]))
+                with open(file_path, 'wb') as f:
+                    data, addr = conn.recvfrom(892000) # retrieve bytes from the client
+                    print(data)
+                    f.write(data)
+                f.close()
 
                 send_back['message'] = f'File {filename} stored successfully.'
 
-            # ! -- directory      
-            elif command == b'dir':
-                pass
+            elif command == b'get':
+                filename = args[0].decode()
+                file_path = os.path.join(file_save_folder, filename)
+
+                try:
+                    with open(file_path, 'rb') as file:
+                        while True:
+                            data = file.read(1024)
+                            if not data:
+                                break
+                            conn.sendall(data)
+                    print(f'Sent file: {filename}')
+                except FileNotFoundError:
+                    print(f'Error: File {filename} not found.')
+                    conn.sendall(f'Error: File {filename} not found.'.encode())
+
+
             else:
                 # Handle other types of messages if needed
                 print(f"Received unknown command: {command}")
-
             # Send back responses
             conn.sendall(send_back['message'].encode())
 
