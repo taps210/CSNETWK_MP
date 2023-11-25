@@ -40,6 +40,7 @@ def handle_client(conn, addr):
             if command == b'join':
                 clients.append(conn)
                 send_back['message'] = 'Connection to the File Exchange Server is successful!'
+                conn.sendall(send_back['message'].encode())
 
                 # means user was registered
                 handle = clientNames.get(connPort)
@@ -47,12 +48,15 @@ def handle_client(conn, addr):
                     send_back['message'] = 'You have reconnected'
                     send_back['success'] = True
                     send_back['handle'] = handle
+                    conn.sendall(send_back['message'].encode())
+            
             # ! -- leave -------------------
             elif command == b'leave':
                 clients.remove(conn)
                 # remove name
                 del(clientNames[connPort])
                 send_back['message'] = 'Connection closed. Thank you!'
+                conn.sendall(send_back['message'].encode())
             # ! -- register ----------------
             elif command == b'register':
                 newHandle = args[0].decode()
@@ -69,6 +73,7 @@ def handle_client(conn, addr):
                     send_back['success'] = False
                 else:
                     clientNames[connPort] = newHandle
+                conn.sendall(send_back['message'].encode())
 
             # ! ---- store
             elif command == b'store':
@@ -83,30 +88,25 @@ def handle_client(conn, addr):
                 f.close()
 
                 send_back['message'] = f'File {filename} stored successfully.'
+                conn.sendall(send_back['message'].encode())
 
             elif command == b'get':
                 filename = args[0].decode()
                 file_path = os.path.join(file_save_folder, filename)
-
+                print(file_path)
                 try:
                     with open(file_path, 'rb') as file:
-                        while True:
-                            data = file.read(892000)
-                            if not data:
-                                break
-                            print("I am send from /get")
-                            conn.sendall(data)
+                        data = file.read(892000)
+                        print("Data:" + data.decode())
+                        conn.sendall(data)
+                    file.close()
                     print(f'Sent file: {filename}')
                 except FileNotFoundError:
                     print(f'Error: File {filename} not found.')
                     conn.sendall(f'Error: File {filename} not found.'.encode())
 
-
             else:
-                # Handle other types of messages if needed
                 print(f"Received unknown command: {command}")
-            # Send back responses
-            conn.sendall(send_back['message'].encode())
 
         except socket.error as e:
             print(f"client has left/terminal window has been closed")

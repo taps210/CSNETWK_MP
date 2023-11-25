@@ -8,7 +8,6 @@ PORT = 0
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 userhandle = None
-
 # ! ----------------WRAPPERS----------------------------
 
 #Checks if correct ip and port combination
@@ -111,17 +110,20 @@ def dir():
 
 @connection_req
 @register_req
-def get():
+def get(newinp):
     filename = newinp[1]
     client_socket.sendall(f'get {filename}\n'.encode())
 
     try:
         with open(filename, 'wb') as file:
-            while True:
-                data = client_socket.recv(892000).decode()
-                if not data:
-                    break
-                file.write(data.encode())
+            print("I am writing")
+            data = client_socket.recv(892000)
+            print("I have received")
+            print(data)
+            file.write(data)
+            print("I am done writing")
+        file.close()
+    
         print(f'File {filename} received successfully.')
     except Exception as e:
         print(f'Error receiving file: {e}')
@@ -163,6 +165,7 @@ def receive_messages():
                 break
 
             print(data.decode())
+            return data
 
         except Exception as e:
             print(f"Error: {e}")
@@ -195,7 +198,7 @@ while True:
     elif command == '/dir':
         dir()
     elif command == '/get':
-        get()
+        get(newinp)
     elif command == '/?':
         instructions()
     else:
