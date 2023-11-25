@@ -91,9 +91,10 @@ def handle_client(conn, addr):
                 try:
                     with open(file_path, 'rb') as file:
                         while True:
-                            data = file.read(1024)
+                            data = file.read(892000)
                             if not data:
                                 break
+                            print("I am send from /get")
                             conn.sendall(data)
                     print(f'Sent file: {filename}')
                 except FileNotFoundError:

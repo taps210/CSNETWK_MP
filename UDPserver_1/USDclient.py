@@ -67,7 +67,6 @@ def register(inp):
     global userhandle
     userhandle = newHandle
     client_socket.sendall(f"register {newHandle}".encode())
-    
 
 @check_args(2)
 @connection_req
@@ -119,7 +118,7 @@ def get():
     try:
         with open(filename, 'wb') as file:
             while True:
-                data = client_socket.recv(1024).decode()
+                data = client_socket.recv(892000).decode()
                 if not data:
                     break
                 file.write(data.encode())
@@ -175,16 +174,11 @@ receive_thread = threading.Thread(target=receive_messages)
 
 while True:
     # Read a message from the user and send it to the server
-    print('yes')
     message = input()
-    print(message)
-    
 
     newinp = message.split()
-    print(newinp)
 
     command = newinp[0]
-    print(command)
 
     if command[0] != '/':
         print('Error: Command not found.')
