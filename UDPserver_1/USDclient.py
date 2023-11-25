@@ -47,7 +47,6 @@ def join(inp):
     HOST, PORT = inp[1], int(inp[2])
     try:
         client_socket.connect((HOST, PORT))
-        receive_thread.start()
     except:
         print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
         return None
@@ -77,10 +76,17 @@ def store(inp):
 
         time.sleep(0.01)
 
+        # with open(filename, 'rb') as f:
+            # while True:
+            #     data = f.read(8192)
+            #     if not data:
+            #         break
+            #     client_socket.sendto(data, (HOST, PORT)) # send as bytes
         with open(filename, 'rb') as f:
             data = f.read(892000)
             client_socket.sendto(data, (HOST, PORT)) # send as bytes
-        f.close()
+            f.close()
+
         print('File sent.')
         
         # with open(filename, 'rb') as file:
@@ -116,13 +122,9 @@ def get(newinp):
 
     try:
         with open(filename, 'wb') as file:
-            print("I am writing")
             data = client_socket.recv(892000)
-            print("I have received")
-            print(data)
             file.write(data)
-            print("I am done writing")
-        file.close()
+            file.flush()
     
         print(f'File {filename} received successfully.')
     except Exception as e:
@@ -155,25 +157,36 @@ def instructions():
     - Request command help to output all input syntax commands for references
 ''')
 
+# def receive_messages():
+#     while True:
+#         try:
+#             data = client_socket.recv(1024)
+
+#             if not data:
+#                 print("Server closed the connection.")
+#                 break
+
+#             print(data.decode())
+#             return data
+
+#         except Exception as e:
+#             print(f"Error: {e}")
+#             break
+#     client_socket.close()
+
+
 def receive_messages():
-    while True:
-        try:
+    # How to use
+    # This collects the message from the server sent through the sendall() method
+    # the recv method collects that data.
+    # MAKE SURE that every method will send some kind of message. If a method does not send a message
+    # spaghettification will ensue
+    try:
             data = client_socket.recv(1024)
-
-            if not data:
-                print("Server closed the connection.")
-                break
-
             print(data.decode())
-            return data
 
-        except Exception as e:
-            print(f"Error: {e}")
-            break
-    client_socket.close()
-
-receive_thread = threading.Thread(target=receive_messages)
-# receive_thread.start()
+    except Exception as e:
+        print("Server has closed")
 
 while True:
     # Read a message from the user and send it to the server
@@ -189,17 +202,25 @@ while True:
 
     if command == '/join':
         join(newinp)
+        receive_messages()
     elif command == '/leave':
         leave(newinp)
+        receive_messages()
     elif command == '/register':
         register(newinp)
+        receive_messages()
     elif command == '/store':
         store(newinp)
+        receive_messages()
     elif command == '/dir':
         dir()
+        # receive_messages()
     elif command == '/get':
         get(newinp)
+        receive_messages()
     elif command == '/?':
         instructions()
     else:
         print('Error: Command not found.')
+
+

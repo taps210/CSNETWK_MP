@@ -57,6 +57,7 @@ def handle_client(conn, addr):
                 del(clientNames[connPort])
                 send_back['message'] = 'Connection closed. Thank you!'
                 conn.sendall(send_back['message'].encode())
+            
             # ! -- register ----------------
             elif command == b'register':
                 newHandle = args[0].decode()
@@ -82,14 +83,23 @@ def handle_client(conn, addr):
                 file_path = os.path.join(file_save_folder, filename)
 
                 with open(file_path, 'wb') as f:
+                #     while True:
+                #         data, addr = conn.recvfrom(8192) # retrieve bytes from the client
+                #         if not data:
+                #             break
+                #         f.write(data)
+                #         f.flush()
+
+                # print("done saving file")
                     data, addr = conn.recvfrom(892000) # retrieve bytes from the client
                     print(data)
                     f.write(data)
-                f.close()
+                    f.close()
 
                 send_back['message'] = f'File {filename} stored successfully.'
                 conn.sendall(send_back['message'].encode())
 
+            # ! ---- get
             elif command == b'get':
                 filename = args[0].decode()
                 file_path = os.path.join(file_save_folder, filename)
@@ -99,12 +109,12 @@ def handle_client(conn, addr):
                         data = file.read(892000)
                         print("Data:" + data.decode())
                         conn.sendall(data)
-                    file.close()
                     print(f'Sent file: {filename}')
                 except FileNotFoundError:
                     print(f'Error: File {filename} not found.')
                     conn.sendall(f'Error: File {filename} not found.'.encode())
 
+            # ! ---- unknown command
             else:
                 print(f"Received unknown command: {command}")
 
