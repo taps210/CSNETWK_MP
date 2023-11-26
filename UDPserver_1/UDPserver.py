@@ -1,6 +1,7 @@
 import socket
 import threading
 import os
+from datetime import datetime
 
 HOST = '127.0.0.1'
 PORT = 12345
@@ -96,7 +97,9 @@ def handle_client(conn, addr):
                     f.write(data)
                     f.close()
 
-                send_back['message'] = f'File {filename} stored successfully.'
+                c_datetime = datetime.now()
+                f_datetime = c_datetime.strftime('%Y-%m-%d %H:%M:%S')
+                send_back['message'] = f'{newHandle}<{f_datetime}>: uploaded {filename}'
                 conn.sendall(send_back['message'].encode())
 
             # ! ---- get

@@ -2,6 +2,7 @@ import socket
 import threading
 import os
 import time
+import math
 
 HOST = ''
 PORT = 0
@@ -85,8 +86,6 @@ def store(inp):
             data = f.read(892000)
             client_socket.sendto(data, (HOST, PORT)) # send as bytes
             f.close()
-
-        print('File sent.')
         return True
 
     #kind of redundant but ig this is just to be safe
@@ -122,7 +121,7 @@ def get(newinp):
             file.write(data)
             file.flush()
     
-        print(f'File {filename} received successfully.')
+        print(f'File received from Server: {filename}')
     except Exception as e:
         print(f'Error receiving file: {e}')
 
