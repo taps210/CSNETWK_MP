@@ -6,6 +6,7 @@ import math
 
 HOST = ''
 PORT = 0
+is_connected = False
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 userhandle = None
@@ -44,10 +45,12 @@ def check_args(n):
 
 @check_args(3)
 def join(inp):
-    global HOST, PORT
+    global HOST, PORT, is_connected
     HOST, PORT = inp[1], int(inp[2])
     try:
+        is_connected = True
         client_socket.connect((HOST, PORT))
+        
     except:
         print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
         return None
@@ -181,7 +184,8 @@ def receive_messages():
             print(data.decode())
 
     except Exception as e:
-        print("Server has closed")
+        #print(f"Error: {e}")
+        pass
 
 while True:
     # Read a message from the user and send it to the server
@@ -199,8 +203,12 @@ while True:
         join(newinp)
         receive_messages()
     elif command == '/leave':
-        leave(newinp)
-        receive_messages()
+        if is_connected == False:
+            print('Error: Disconnection failed. Please connect to the server first.')
+        else:
+            leave(newinp)
+            print('Connection closed. Thank you!')
+            is_connected = False
     elif command == '/register':
         register(newinp)
         receive_messages()

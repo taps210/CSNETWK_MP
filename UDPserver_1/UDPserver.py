@@ -26,12 +26,12 @@ def handle_client(conn, addr):
 
             data = conn.recv(89200)
 
-            if not data:
-                # If data is empty, the client has closed the connection
-                clients.remove(conn)
-                del(clientNames[connPort])
-                conn.close()
-                break
+            # if not data:
+            #     # If data is empty, the client has closed the connection
+            #     clients.remove(conn)
+            #     del(clientNames[connPort])
+            #     conn.close()
+            #     break
 
             # Check the type of command based on the first word
 
@@ -55,9 +55,9 @@ def handle_client(conn, addr):
             elif command == b'leave':
                 clients.remove(conn)
                 # remove name
-                del(clientNames[connPort])
-                send_back['message'] = 'Connection closed. Thank you!'
-                conn.sendall(send_back['message'].encode())
+                # del(clientNames[connPort])
+                # send_back['message'] = 'Connection closed. Thank you!'
+                # conn.sendall(send_back['message'].encode())
             
             # ! -- register ----------------
             elif command == b'register':
