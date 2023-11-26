@@ -71,32 +71,28 @@ def register(inp):
 @register_req
 def store(inp):
     filename = inp[1]
+    
+    if not os.path.exists(filename):
+        print(f'Error: File {filename} not found.')
+        return False
+
     try:
         client_socket.sendall(f'store {filename}\n'.encode())
 
         time.sleep(0.01)
 
-        # with open(filename, 'rb') as f:
-            # while True:
-            #     data = f.read(8192)
-            #     if not data:
-            #         break
-            #     client_socket.sendto(data, (HOST, PORT)) # send as bytes
         with open(filename, 'rb') as f:
             data = f.read(892000)
             client_socket.sendto(data, (HOST, PORT)) # send as bytes
             f.close()
 
         print('File sent.')
-        
-        # with open(filename, 'rb') as file:
-        #     file_content = file.read()
+        return True
 
-        # send_to_server = f"store {filename}\n".encode() + file_content
-        # client_socket.sendall(send_to_server)
-
+    #kind of redundant but ig this is just to be safe
     except FileNotFoundError:
         print(f'Error: File {filename} not found.')
+        return False
 
 @connection_req
 @register_req
@@ -210,8 +206,9 @@ while True:
         register(newinp)
         receive_messages()
     elif command == '/store':
-        store(newinp)
-        receive_messages()
+        shouldReceive = store(newinp)
+        if shouldReceive == True:
+            receive_messages()
     elif command == '/dir':
         dir()
         # receive_messages()

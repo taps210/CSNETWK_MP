@@ -1,0 +1,1 @@
+1. When you store a file that doesn't exist, the program will try to make it in the server folder, after that the program does not respond anymore
