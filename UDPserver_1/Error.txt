@@ -8,3 +8,5 @@
 - C3 Failed, OSError: [Errno 57] Socket is not connected
 - D3 Failed, seems to occur when /dir is after a blank /join
     - Fixed, Same solution as the 1. where used tru and flase statement to check to receive messages or not
+
+- E to G has not been checked yet
