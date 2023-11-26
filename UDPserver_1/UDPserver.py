@@ -55,9 +55,9 @@ def handle_client(conn, addr):
             elif command == b'leave':
                 clients.remove(conn)
                 # remove name
-                # del(clientNames[connPort])
-                # send_back['message'] = 'Connection closed. Thank you!'
-                # conn.sendall(send_back['message'].encode())
+                #del(clientNames[connPort])
+                send_back['message'] = 'Connection closed. Thank you!'
+                conn.sendall(send_back['message'].encode())
             
             # ! -- register ----------------
             elif command == b'register':

@@ -48,14 +48,16 @@ def join(inp):
     global HOST, PORT, is_connected
     HOST, PORT = inp[1], int(inp[2])
     try:
-        is_connected = True
         client_socket.connect((HOST, PORT))
-        
+        is_connected = True
+        client_socket.sendall(b'join')
+        return True
     except:
-        print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
-        return None
+        return False
+        #print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
+        #return None
     
-    client_socket.sendall(b'join')
+    
 
 @check_args(1)
 @connection_req
@@ -200,15 +202,16 @@ while True:
         continue
 
     if command == '/join':
-        join(newinp)
-        receive_messages()
+        shouldReceive = join(newinp)
+        if shouldReceive == True:
+            receive_messages()
     elif command == '/leave':
         if is_connected == False:
             print('Error: Disconnection failed. Please connect to the server first.')
         else:
             leave(newinp)
-            print('Connection closed. Thank you!')
             is_connected = False
+            receive_messages()
     elif command == '/register':
         register(newinp)
         receive_messages()

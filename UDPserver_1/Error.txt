@@ -1,4 +1,10 @@
 1. When you store a file that doesn't exist, the program will try to make it in the server folder, after that the program does not respond anymore
 - Status: Fixed
 2. Leave is glitchy (If person join, then leave, can't rejoin)
-- Status: Broken
+- Status: Brute Forced, join has try except, but the except block is blank so it diesnt send error line
+
+3. Test Demo Kit
+- C2 Failed, BrokenPipeError: [Errno 32] Broken pipe
+- C3 Failed, OSError: [Errno 57] Socket is not connected
+- D3 Failed, seems to occur when /dir is after a blank /join
+    - Fixed, Same solution as the 1. where used tru and flase statement to check to receive messages or not
