@@ -8,5 +8,11 @@
 - C3 Failed, OSError: [Errno 57] Socket is not connected
 - D3 Failed, seems to occur when /dir is after a blank /join
     - Fixed, Same solution as the 1. where used tru and flase statement to check to receive messages or not
-
+- E2 Failed, After doing /register without arguements, fail to accept inputs
+    - Fixed
+- F5 failed???, unsure if avif file is the issue, or the sequence leading to F5 made it fail, this is the error
+    -File "C:\Users\hanzp\OneDrive\Desktop\CSNETWK\CSNETWK_MP\UDPserver_1\UDPserver.py", line 113, in handle_client
+        print("Data:" + data.decode())
+                    ^^^^^^^^^^^^^
+    UnicodeDecodeError: 'utf-8' codec can't decode byte 0xbf in position 171: invalid start byte    
 - E to G has not been checked yet

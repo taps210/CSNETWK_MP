@@ -71,6 +71,8 @@ def register(inp):
     global userhandle
     userhandle = newHandle
     client_socket.sendall(f"register {newHandle}".encode())
+    return True
+    
 
 @check_args(2)
 @connection_req
@@ -213,8 +215,9 @@ while True:
             is_connected = False
             receive_messages()
     elif command == '/register':
-        register(newinp)
-        receive_messages()
+        shouldReceive = register(newinp)
+        if shouldReceive == True:
+            receive_messages()
     elif command == '/store':
         shouldReceive = store(newinp)
         if shouldReceive == True:
