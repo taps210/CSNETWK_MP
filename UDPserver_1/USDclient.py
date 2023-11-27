@@ -53,8 +53,8 @@ def join(inp):
         client_socket.sendall(b'join')
         return True
     except:
+        print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
         return False
-        #print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
         #return None
     
     
@@ -215,9 +215,12 @@ while True:
             is_connected = False
             receive_messages()
     elif command == '/register':
-        shouldReceive = register(newinp)
-        if shouldReceive == True:
-            receive_messages()
+        if is_connected == False:
+            print('Error: Register failed. Please connect to the server first.')
+        else:   
+            shouldReceive = register(newinp)
+            if shouldReceive == True:
+                receive_messages()
     elif command == '/store':
         shouldReceive = store(newinp)
         if shouldReceive == True:
