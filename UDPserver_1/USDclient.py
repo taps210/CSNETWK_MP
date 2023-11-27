@@ -136,17 +136,6 @@ def get(newinp):
         #get data
         data = client_socket.recv(892000)
         if data.decode() != "FileDNE2457093745443":
-            if os.path.exists(filename):
-                base, extension = os.path.splitext(filename)
-                count = 1
-
-                while os.path.exists(f"{base}({count}){extension}"):
-                    count += 1
-
-                new_filename = f"{base}({count}){extension}"
-                with open(new_filename, 'wb') as file:
-                    file.write(data)
-                print(f'File received from Server: {new_filename}')
             with open(filename, 'wb') as file:
                 file.write(data)
                 file.flush()
