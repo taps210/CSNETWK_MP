@@ -44,7 +44,7 @@ def join(inp):
     try:
         client_socket.settimeout(5)
         client_socket.connect((HOST, PORT))
-        print('has connected')
+        #print('has connected')
         is_connected = True
         client_socket.sendall(b'join')
         return True
@@ -117,11 +117,15 @@ def get(newinp):
     client_socket.sendall(f'get {filename}\n'.encode())
 
     try:
-        #get data
+        # get data
         data = client_socket.recv(892000)
-        if data.decode() != "FileDNE2457093745443":
+        #print('received')
+        
+        if data.decode(errors='ignore') != "FileDNE":
+            #print('it exists')
+            
             if os.path.exists(filename):
-                match = re.search('\\((\\d+)\\)', filename)
+                match = re.search(r'\((\d+)\)', filename)
                 count = int(match.group(1)) if match else 0
                 count += 1
                 base, extension = os.path.splitext(filename)
@@ -132,7 +136,9 @@ def get(newinp):
                     new_filename = f"{base}({count}){extension}"
 
                 with open(new_filename, 'wb') as file:
+                    #print('I plan to write')
                     file.write(data)
+                    #print('I have written')
                     file.flush()
                 print(f'File received from Server: {new_filename}')
             else:
@@ -141,9 +147,11 @@ def get(newinp):
                     file.flush()
                 print(f'File received from Server: {filename}')
         else:
-            raise FileNotFoundError
+            raise FileNotFoundError("File not found in the server.")
+    except FileNotFoundError as e:
+        print(f'Error receiving file: {e}')
     except Exception as e:
-        print(f'Error receiving file: File not found in the server.')
+        print(f'Error receiving file: {e}')
 
 def instructions():
     print(

@@ -127,17 +127,20 @@ def handle_client(conn, addr):
                     
 
                 try:
-                    if not os.path.exists(file_path):
+                    if os.path.exists(file_path):
+                        with open(file_path, 'rb') as file:
+                            data = file.read(892000)
+                            #print("Data:" + data.decode())
+                            conn.sendall(data)
+                        print(f'Sent file: {filename}')
+                        print(data)
+                        print('--------------------------------------------------')
+                        print(data.decode)
+                    else:
                         raise FileNotFoundError
-                    
-                    with open(file_path, 'rb') as file:
-                        data = file.read(892000)
-                        print("Data:" + data.decode())
-                        conn.sendall(data)
-                    print(f'Sent file: {filename}')
                 except FileNotFoundError:
                     print(f'Error: File DNE')
-                    conn.sendall(f"FileDNE2457093745443".encode())
+                    conn.sendall(f"FileDNE".encode())
 
                     
 
