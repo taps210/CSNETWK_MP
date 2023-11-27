@@ -42,8 +42,6 @@ def join(inp):
     HOST, PORT = inp[1], int(inp[2])
 
     try:
-        print(HOST)
-        print(PORT)
         client_socket.settimeout(5)
         client_socket.connect((HOST, PORT))
         print('has connected')
@@ -55,7 +53,6 @@ def join(inp):
         print(e)
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         return False
-        #return None
     
 def leave():
     client_socket.sendall(b'leave')
@@ -88,26 +85,13 @@ def store(inp):
             client_socket.sendto(data, (HOST, PORT)) # send as bytes
             f.close()
         return True
-
-    #kind of redundant but ig this is just to be safe
+    
     except FileNotFoundError:
         print(f'Error: File {filename} not found.')
         return False
 
 @register_req
 def dir():
-        # server_directory = f"./Server"
-
-        # if not os.path.exists(server_directory):
-        #     print(f"Directory '{server_directory}' does not exist.")
-
-        # try:
-        #     with os.scandir(server_directory) as entries:
-        #         print(f"Files and Directories in '{server_directory}':")
-        #         for entry in entries:
-        #             print(entry.name)
-        # except Exception as e:
-        #     print(f"Error accessing the directory: {e}")
 
         client_socket.sendall('dir\n'.encode())
 
@@ -136,10 +120,26 @@ def get(newinp):
         #get data
         data = client_socket.recv(892000)
         if data.decode() != "FileDNE2457093745443":
-            with open(filename, 'wb') as file:
-                file.write(data)
-                file.flush()
-            print(f'File received from Server: {filename}')
+            if os.path.exists(filename):
+                match = re.search('\\((\\d+)\\)', filename)
+                count = int(match.group(1)) if match else 0
+                count += 1
+                base, extension = os.path.splitext(filename)
+                new_filename = f"{base}({count}){extension}"
+
+                while os.path.exists(new_filename):
+                    count += 1
+                    new_filename = f"{base}({count}){extension}"
+
+                with open(new_filename, 'wb') as file:
+                    file.write(data)
+                    file.flush()
+                print(f'File received from Server: {new_filename}')
+            else:
+                with open(filename, 'wb') as file:
+                    file.write(data)
+                    file.flush()
+                print(f'File received from Server: {filename}')
         else:
             raise FileNotFoundError
     except Exception as e:
@@ -171,24 +171,6 @@ def instructions():
     /?
     - Request command help to output all input syntax commands for references
 ''')
-
-# def receive_messages():
-#     while True:
-#         try:
-#             data = client_socket.recv(1024)
-
-#             if not data:
-#                 print("Server closed the connection.")
-#                 break
-
-#             print(data.decode())
-#             return data
-
-#         except Exception as e:
-#             print(f"Error: {e}")
-#             break
-#     client_socket.close()
-
 
 def receive_messages():
     # How to use
