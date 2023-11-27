@@ -2,6 +2,7 @@ import socket
 import threading
 import os
 from datetime import datetime
+import pickle
 
 HOST = '127.0.0.1'
 PORT = 12345
@@ -102,20 +103,43 @@ def handle_client(conn, addr):
                 send_back['message'] = f'{newHandle}<{f_datetime}>: uploaded {filename}'
                 conn.sendall(send_back['message'].encode())
 
+            # ! ---- dir
+            elif command == b'dir':
+                server_directory = f"./Server"
+
+                if not os.path.exists(server_directory):
+                    send_back['message'] = f'Error: Cannot resolve directory target'
+                    conn.sendall(send_back['message'].encode())
+
+                try:
+                    list_dir = os.listdir(server_directory)
+                    serialized_list = pickle.dumps(list_dir)
+                    conn.sendall(serialized_list)
+
+                except Exception as e:
+                    print(f"Error accessing the directory: {e}")
+
             # ! ---- get
             elif command == b'get':
                 filename = args[0].decode()
                 file_path = os.path.join(file_save_folder, filename)
                 print(file_path)
+                    
+
                 try:
+                    if not os.path.exists(file_path):
+                        raise FileNotFoundError
+                    
                     with open(file_path, 'rb') as file:
                         data = file.read(892000)
                         print("Data:" + data.decode())
                         conn.sendall(data)
                     print(f'Sent file: {filename}')
                 except FileNotFoundError:
-                    print(f'Error: File {filename} not found.')
-                    conn.sendall(f'Error: File {filename} not found.'.encode())
+                    print(f'Error: File DNE')
+                    conn.sendall(f"FileDNE2457093745443".encode())
+
+                    
 
             # ! ---- unknown command
             else:

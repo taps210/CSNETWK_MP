@@ -3,6 +3,8 @@ import threading
 import os
 import time
 import math
+import re
+import pickle
 
 HOST = ''
 PORT = 0
@@ -94,32 +96,65 @@ def store(inp):
 
 @register_req
 def dir():
-        server_directory = f"./Server"
+        # server_directory = f"./Server"
 
-        if not os.path.exists(server_directory):
-            print(f"Directory '{server_directory}' does not exist.")
+        # if not os.path.exists(server_directory):
+        #     print(f"Directory '{server_directory}' does not exist.")
+
+        # try:
+        #     with os.scandir(server_directory) as entries:
+        #         print(f"Files and Directories in '{server_directory}':")
+        #         for entry in entries:
+        #             print(entry.name)
+        # except Exception as e:
+        #     print(f"Error accessing the directory: {e}")
+
+        client_socket.sendall('dir\n'.encode())
 
         try:
-            with os.scandir(server_directory) as entries:
-                print(f"Files and Directories in '{server_directory}':")
-                for entry in entries:
-                    print(entry.name)
+            #get data
+            data = client_socket.recv(892000)
+            if data.decode != '':
+                # code for deserializing data
+                print(f"Files in the server:")
+                received_list = pickle.loads(data)
+                for file_name in received_list:
+                    print(file_name)
+
         except Exception as e:
-            print(f"Error accessing the directory: {e}")
+            print(e)
+            print(f'Error: Cannot retrieve list of server files.')
 
 @register_req
 def get(newinp):
     filename = newinp[1]
+
+    #request
     client_socket.sendall(f'get {filename}\n'.encode())
 
     try:
-        with open(filename, 'wb') as file:
-            data = client_socket.recv(892000)
-            file.write(data)
-            file.flush()
-        print(f'File received from Server: {filename}')
+        #get data
+        data = client_socket.recv(892000)
+        if data.decode() != "FileDNE2457093745443":
+            if os.path.exists(filename):
+                base, extension = os.path.splitext(filename)
+                count = 1
+
+                while os.path.exists(f"{base}({count}){extension}"):
+                    count += 1
+
+                new_filename = f"{base}({count}){extension}"
+                with open(new_filename, 'wb') as file:
+                    file.write(data)
+                print(f'File received from Server: {new_filename}')
+            with open(filename, 'wb') as file:
+                file.write(data)
+                file.flush()
+            print(f'File received from Server: {filename}')
+        else:
+            raise FileNotFoundError
     except Exception as e:
-        print(f'Error receiving file: {e}')
+        print(f'Error receiving file: File not found in the server.')
 
 def instructions():
     print(
