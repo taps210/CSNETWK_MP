@@ -12,15 +12,6 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 userhandle = None
 # ! ----------------WRAPPERS----------------------------
 
-#Checks if correct ip and port combination
-def connection_req(func):
-    def wrapper(*args, **kwargs):
-        if client_socket.getsockname() == ('0.0.0.0', 0):
-            print('Error: Connection to the Server has failed! Please check IP Address and Port Number.')
-            return
-        return func(*args, **kwargs)
-    return wrapper
-
 #Checks if correct users
 def register_req(func):
     def wrapper(*args, **kwargs):
@@ -45,27 +36,29 @@ def check_args(n):
 
 @check_args(3)
 def join(inp):
-    global HOST, PORT, is_connected
+    global HOST, PORT, is_connected, client_socket
     HOST, PORT = inp[1], int(inp[2])
+
     try:
+        print(HOST)
+        print(PORT)
+        client_socket.settimeout(5)
         client_socket.connect((HOST, PORT))
+        print('has connected')
         is_connected = True
         client_socket.sendall(b'join')
         return True
-    except:
+    except Exception as e:
         print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
+        print(e)
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         return False
         #return None
     
-    
-
-@check_args(1)
-@connection_req
-def leave(inp):
+def leave():
     client_socket.sendall(b'leave')
 
 @check_args(2)
-@connection_req
 def register(inp):
     newHandle = inp[1]
     global userhandle
@@ -75,7 +68,6 @@ def register(inp):
     
 
 @check_args(2)
-@connection_req
 @register_req
 def store(inp):
     filename = inp[1]
@@ -100,7 +92,6 @@ def store(inp):
         print(f'Error: File {filename} not found.')
         return False
 
-@connection_req
 @register_req
 def dir():
         server_directory = f"./Server"
@@ -116,7 +107,6 @@ def dir():
         except Exception as e:
             print(f"Error accessing the directory: {e}")
 
-@connection_req
 @register_req
 def get(newinp):
     filename = newinp[1]
@@ -127,7 +117,6 @@ def get(newinp):
             data = client_socket.recv(892000)
             file.write(data)
             file.flush()
-    
         print(f'File received from Server: {filename}')
     except Exception as e:
         print(f'Error receiving file: {e}')
@@ -211,9 +200,10 @@ while True:
         if is_connected == False:
             print('Error: Disconnection failed. Please connect to the server first.')
         else:
-            leave(newinp)
+            leave()
             is_connected = False
             receive_messages()
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     elif command == '/register':
         if is_connected == False:
             print('Error: Register failed. Please connect to the server first.')
@@ -222,15 +212,23 @@ while True:
             if shouldReceive == True:
                 receive_messages()
     elif command == '/store':
-        shouldReceive = store(newinp)
-        if shouldReceive == True:
-            receive_messages()
+        if is_connected == False:
+            print('Error: Store failed. Please connect to the server first.')
+        else:
+            shouldReceive = store(newinp)
+            if shouldReceive == True:
+                receive_messages()
     elif command == '/dir':
-        dir()
-        # receive_messages()
+        if is_connected == False:
+            print('Error: Directory request failed. Please connect to the server first.')
+        else:
+            dir()
     elif command == '/get':
-        get(newinp)
-        receive_messages()
+        if is_connected == False:
+            print('Error: Get failed. Please connect to the server first.')
+        else:
+            get(newinp)
+            receive_messages()
     elif command == '/?':
         instructions()
     else:
