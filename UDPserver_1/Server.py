@@ -1,3 +1,7 @@
+#De Leon, Fancis Zaccharie
+#Bernardo, Noah
+#Yu, Hanz Patrick
+
 import socket
 import threading
 import os

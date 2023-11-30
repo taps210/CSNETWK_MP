@@ -1,3 +1,7 @@
+#De Leon, Fancis Zaccharie
+#Bernardo, Noah
+#Yu, Hanz Patrick
+
 import socket
 import threading
 import os
@@ -50,7 +54,6 @@ def join(inp):
         return True
     except Exception as e:
         print("Error: Connection to the File Exchange Server has failed! Please check IP Address and Port Number.")
-        print(e)
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         return False
     
